@@ -1,0 +1,24 @@
+{
+  "name": "solid-2-cloudflare",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "deploy": "pnpm build && wrangler deploy"
+  },
+  "dependencies": {
+    "@solidjs/web": "2.0.0-beta.23",
+    "solid-js": "2.0.0-beta.23"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.46.0",
+    "@types/node": "^24.13.2",
+    "typescript": "~6.0.2",
+    "vite": "^8.1.1",
+    "vite-plugin-solid": "^3.0.0-next.15",
+    "wrangler": "^4.113.0"
+  }
+}
