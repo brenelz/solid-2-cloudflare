@@ -2,3 +2,7 @@ allowBuilds:
   esbuild: true
   sharp: false
   workerd: false
+
+minimumReleaseAgeExclude:
+  - '@tanstack/*'
+  - vite-plugin-solid@3.0.0-next.17

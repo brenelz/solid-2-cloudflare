@@ -1,5 +1,2 @@
 /// <reference types="vite/client" />
-
-declare module 'virtual:solid-ssr-handler' {
-  export function handleRequest(request: Request): Promise<Response>
-}
+/// <reference types="vite-plugin-solid/virtual-solid-manifest" />
