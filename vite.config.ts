@@ -1,13 +1,18 @@
 import { defineConfig } from 'vite'
-import solid, { serverFunctions } from 'vite-plugin-solid'
+import solid from 'vite-plugin-solid'
 import { cloudflare } from '@cloudflare/vite-plugin'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
 
-export default defineConfig(({ command }) => ({
+export default defineConfig({
   environments: {
-    solid_2_cloudflare: {
+    ssr: {
       optimizeDeps: {
         exclude: ['@tanstack/solid-router'],
+      },
+      build: {
+        rollupOptions: {
+          input: './src/entry-server.tsx',
+        },
       },
     },
     client: {
@@ -18,40 +23,22 @@ export default defineConfig(({ command }) => ({
         },
       },
     },
-    ssr: {
-      build: {
-        rollupOptions: {
-          input: './src/entry-server.tsx',
-        },
-      },
-    },
   },
   plugins: [
     tanstackRouter({
       target: 'solid',
       autoCodeSplitting: true
     }),
-    {
-      name: 'build-client-manifest-first',
-      apply: 'build',
-      buildApp: {
-        order: 'pre',
-        async handler(builder) {
-          await builder.build(builder.environments.client)
-        },
-      },
-    },
     cloudflare({
-      // Solid's dev middleware needs Vite's runnable default SSR environment.
-      viteEnvironment: command === 'build' ? { name: 'ssr' } : undefined,
+      viteEnvironment: { name: 'ssr' },
     }),
-    // Composed directly (instead of `solid({ serverFunctions: true })`) to
-    // skip the plugin's dev middleware, which handles /_server in Vite's
-    // node SSR environment — separate module state from the workerd
-    // environment that renders pages. Without it, /_server falls through
-    // to the worker in dev, matching production. Must precede solid():
-    // the directive transform runs before the JSX transform.
-    serverFunctions(),
-    solid({ ssr: true }),
+    solid({
+      ssr: true,
+      // devMiddleware off: /_server falls through to the worker in dev, so
+      // server functions run in workerd with the same module state as page
+      // SSR (the plugin's middleware would run them in Vite's node SSR
+      // environment instead).
+      serverFunctions: { devMiddleware: false },
+    }),
   ],
-}))
+})

@@ -6,6 +6,10 @@ import {
 } from '@tanstack/solid-router/ssr/server'
 import { provideRequestEvent } from '@solidjs/web/storage'
 import manifest from 'virtual:solid-manifest'
+// With the plugin's dev middleware off, this entry owns endpoint dispatch,
+// so it loads the manifest itself: functions referenced only by client code
+// still register before the first request.
+import 'virtual:solid-server-function-manifest'
 import {
     endpoint,
     handleServerFunctionRequest,
