@@ -11,6 +11,8 @@ import {
     handleServerFunctionRequest,
 } from 'virtual:solid-server-function-handler'
 import { createAppRouter } from './router.tsx'
+import { collectRouterFlightData } from './singleFlight.ts'
+import type { ServerFunctionEvent, ServerFunctionOutcome } from '@solidjs/web/server-functions/server'
 
 const clientEntry = import.meta.env.DEV
     ? '/src/entry-client.tsx'
@@ -19,7 +21,13 @@ const clientEntry = import.meta.env.DEV
 export default {
     fetch(request: Request) {
         if (new URL(request.url).pathname === endpoint) {
-            return handleServerFunctionRequest(request)
+            return handleServerFunctionRequest(request, {
+                // The handler runs this hook outside its provideEvent scope,
+                // so the event is re-provided for the loaders' in-process
+                // server function calls.
+                collectFlightData: (event: ServerFunctionEvent, outcome: ServerFunctionOutcome) =>
+                    provideRequestEvent(event, () => collectRouterFlightData(event, outcome)),
+            })
         }
 
         return provideRequestEvent({ request, locals: { clientEntry } }, () => {

@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite'
-import solid from 'vite-plugin-solid'
+import solid, { serverFunctions } from 'vite-plugin-solid'
 import { cloudflare } from '@cloudflare/vite-plugin'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
 
@@ -45,6 +45,13 @@ export default defineConfig(({ command }) => ({
       // Solid's dev middleware needs Vite's runnable default SSR environment.
       viteEnvironment: command === 'build' ? { name: 'ssr' } : undefined,
     }),
-    solid({ ssr: true, serverFunctions: true }),
+    // Composed directly (instead of `solid({ serverFunctions: true })`) to
+    // skip the plugin's dev middleware, which handles /_server in Vite's
+    // node SSR environment — separate module state from the workerd
+    // environment that renders pages. Without it, /_server falls through
+    // to the worker in dev, matching production. Must precede solid():
+    // the directive transform runs before the JSX transform.
+    serverFunctions(),
+    solid({ ssr: true }),
   ],
 }))
