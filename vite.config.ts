@@ -9,19 +9,6 @@ export default defineConfig({
       optimizeDeps: {
         exclude: ['@tanstack/solid-router'],
       },
-      build: {
-        rollupOptions: {
-          input: './src/entry-server.tsx',
-        },
-      },
-    },
-    client: {
-      build: {
-        manifest: true,
-        rollupOptions: {
-          input: './src/entry-client.tsx',
-        },
-      },
     },
   },
   plugins: [
@@ -33,12 +20,8 @@ export default defineConfig({
       viteEnvironment: { name: 'ssr' },
     }),
     solid({
-      ssr: true,
-      // devMiddleware off: /_server falls through to the worker in dev, so
-      // server functions run in workerd with the same module state as page
-      // SSR (the plugin's middleware would run them in Vite's node SSR
-      // environment instead).
-      serverFunctions: { devMiddleware: false },
+      ssr: { external: true },
+      serverFunctions: { configure: './src/server-config.ts' },
     }),
   ],
 })

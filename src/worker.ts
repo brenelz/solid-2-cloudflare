@@ -1,1 +1,3 @@
-export { default } from './entry-server.tsx'
+import { handleRequest } from 'virtual:solid-ssr-handler'
+
+export default { fetch: (request: Request) => handleRequest(request) }

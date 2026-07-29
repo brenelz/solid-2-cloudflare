@@ -4,52 +4,30 @@ import {
     createRequestHandler,
     renderRouterToStream,
 } from '@tanstack/solid-router/ssr/server'
-import { provideRequestEvent } from '@solidjs/web/storage'
 import manifest from 'virtual:solid-manifest'
-// With the plugin's dev middleware off, this entry owns endpoint dispatch,
-// so it loads the manifest itself: functions referenced only by client code
-// still register before the first request.
-import 'virtual:solid-server-function-manifest'
-import {
-    endpoint,
-    handleServerFunctionRequest,
-} from 'virtual:solid-server-function-handler'
+import { getRequestEvent } from '@solidjs/web'
 import { createAppRouter } from './router.tsx'
-import { collectRouterFlightData } from './singleFlight.ts'
-import type { ServerFunctionEvent, ServerFunctionOutcome } from '@solidjs/web/server-functions/server'
 
-const clientEntry = import.meta.env.DEV
-    ? '/src/entry-client.tsx'
-    : `${manifest._base ?? '/'}${manifest['src/entry-client.tsx'].file}`
+export function render(request: Request, context: { clientEntry?: string }) {
+    // The handler's literal-rewrite only covers HTML/stream results, not the
+    // Response the router returns — surface its resolved entry to the root
+    // document's <script> instead.
+    const event = getRequestEvent()
+    if (event && context.clientEntry) event.locals.clientEntry = context.clientEntry
 
-export default {
-    fetch(request: Request) {
-        if (new URL(request.url).pathname === endpoint) {
-            return handleServerFunctionRequest(request, {
-                // The handler runs this hook outside its provideEvent scope,
-                // so the event is re-provided for the loaders' in-process
-                // server function calls.
-                collectFlightData: (event: ServerFunctionEvent, outcome: ServerFunctionOutcome) =>
-                    provideRequestEvent(event, () => collectRouterFlightData(event, outcome)),
-            })
-        }
+    const handler = createRequestHandler({
+        request,
+        createRouter: createAppRouter
+    })
 
-        return provideRequestEvent({ request, locals: { clientEntry } }, () => {
-            const handler = createRequestHandler({
-                request,
-                createRouter: createAppRouter
-            })
-
-            return handler(({ request, responseHeaders, router }) => {
-                responseHeaders.set('content-type', 'text/html; charset=utf-8')
-                return renderRouterToStream({
-                    request,
-                    responseHeaders,
-                    router,
-                    manifest,
-                    children: () => <RouterServer router={router} />,
-                })
-            })
+    return handler(({ request, responseHeaders, router }) => {
+        responseHeaders.set('content-type', 'text/html; charset=utf-8')
+        return renderRouterToStream({
+            request,
+            responseHeaders,
+            router,
+            manifest,
+            children: () => <RouterServer router={router} />,
         })
-    },
+    })
 }
