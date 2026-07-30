@@ -1,18 +1,19 @@
 import { respond } from "@solidjs/web";
-import { GET } from "@solidjs/web/server-functions"
+import { query } from "./query.ts";
+import { action } from "./action.ts";
 
 let global = 'Hello World';
 
-export const hello = GET(async function () {
+export const hello = query(async function () {
     'use server'
     console.log('on server')
     await new Promise(resolve => setTimeout(resolve, 1000))
     return global;
-});
+}, 'hello');
 
-export const changeText = async function () {
+export const changeText = action(async function () {
     'use server'
-    global = 'Hello World 2';
+    global = global + '!';
 
     return respond({ ok: true });
-};
+});

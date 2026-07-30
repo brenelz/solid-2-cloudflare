@@ -3,13 +3,14 @@ import { createMemo, Loading } from 'solid-js'
 import { changeText, hello } from '../api.ts'
 
 export const Route = createFileRoute('/')({
-  loader: () => ({ message: hello() }),
+  loader: () => {
+    void hello();
+  },
   component: Home,
 })
 
 function Home() {
-  const data = Route.useLoaderData()
-  const message = createMemo(() => data().message)
+  const message = createMemo(() => hello())
 
   return (
     <section class="page">
@@ -21,10 +22,7 @@ function Home() {
         <Loading fallback={<p class="loading"><span class="loading-dot" />Loading...</p>}>
           <p class="result-value">{message()}</p>
         </Loading>
-        <form onSubmit={(e) => {
-          e.preventDefault();
-          changeText();
-        }} method="post">
+        <form action={changeText} method="post">
           <button class="change-text-button" type="submit">change text</button>
         </form>
       </div>
