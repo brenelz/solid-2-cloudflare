@@ -10,10 +10,10 @@
     "deploy": "pnpm build && wrangler deploy"
   },
   "dependencies": {
-    "@solidjs/web": "2.0.0-beta.27",
+    "@solidjs/web": "2.0.0-beta.29",
     "@tanstack/router-core": "1.171.14",
     "@tanstack/solid-router": "2.0.0-beta.28",
-    "solid-js": "2.0.0-beta.27"
+    "solid-js": "2.0.0-beta.29"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.46.0",
@@ -21,7 +21,7 @@
     "@types/node": "^24.13.2",
     "typescript": "~6.0.2",
     "vite": "^8.1.1",
-    "vite-plugin-solid": "3.0.0-next.19",
+    "vite-plugin-solid": "3.0.0-next.20",
     "wrangler": "^4.113.0"
   }
 }
