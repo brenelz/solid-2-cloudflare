@@ -764,8 +764,8 @@ packages:
     peerDependencies:
       solid-js: '>=1.8.4'
 
-  '@solidjs/signals@2.0.0-beta.27':
-    resolution: {integrity: sha512-dSTaBfKigd58K+INKvzesxmAw/mnBEIYrdNI+a8K1hDVrSC7oil7bS36bI98ltua/Vfr9XZ+rPIQoFXtaqtgbw==}
+  '@solidjs/signals@2.0.0-beta.28':
+    resolution: {integrity: sha512-apxoq3Rhp+NbqPOxipMU32QXgzkfXg4gTHxL1dLSm49NuTid+KrSSHLzGJNaxoaGgoWjLj2RPPnfa38twQAW/A==}
 
   '@solidjs/web@2.0.0-beta.27':
     resolution: {integrity: sha512-RceyVg+rf8OZJ/c6kB3Qsz1kE6arrakyRArBypAnxGmhwC89pxltSgET6Stusngl2kUdeiai/NR4LMTJwWO9OQ==}
@@ -1927,7 +1927,7 @@ snapshots:
     dependencies:
       solid-js: 2.0.0-beta.27
 
-  '@solidjs/signals@2.0.0-beta.27': {}
+  '@solidjs/signals@2.0.0-beta.28': {}
 
   '@solidjs/web@2.0.0-beta.27(solid-js@2.0.0-beta.27)':
     dependencies:
@@ -2325,7 +2325,7 @@ snapshots:
 
   solid-js@2.0.0-beta.27:
     dependencies:
-      '@solidjs/signals': 2.0.0-beta.27
+      '@solidjs/signals': 2.0.0-beta.28
       csstype: 3.2.3
       seroval: 1.5.6
       seroval-plugins: 1.5.6(seroval@1.5.6)

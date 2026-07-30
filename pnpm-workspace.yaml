@@ -4,7 +4,10 @@ allowBuilds:
   workerd: false
 
 minimumReleaseAgeExclude:
-  - '@tanstack/*'
+  - "@tanstack/*"
   - vite-plugin-solid@3.0.0-next.19
   - babel-preset-solid
-  - '@dom-expressions/*'
+  - "@dom-expressions/*"
+  # registry metadata for these lacks the "time" field the release-age gate needs
+  - "seroval"
+  - "seroval-plugins"

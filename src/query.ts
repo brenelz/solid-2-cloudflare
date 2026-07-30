@@ -1,25 +1,38 @@
 /**
- * `query()` — request-deduped, SSR-seeded async cache, ported from
- * @solidjs/router's `query()` (next branch) to Solid 2 + TanStack Router.
+ * `query()` — request-deduped async cache for Solid 2, a port of
+ * @solidjs/router's `query()` (next branch) with no router dependency.
  *
- * Deviations from solid-router:
- * - SSR -> client seeding rides TanStack Router's `dehydrate`/`hydrate`
- *   options (`collectQueries`/`seedQueries`) instead of sharedConfig
- *   serialization.
- * - Server functions are declared GET via transport metadata (this stack's
- *   compiled references don't carry a `.GET` property).
- * - No routing intent/preload integration, and no Response/redirect
- *   handling yet (TODO).
+ * Deduping is by key (`name` + a stable hash of the arguments): calling the
+ * wrapped function in a route loader/preload and again in a component memo
+ * returns the SAME promise. Solid 2 memos unwrap promises, so
+ * `createMemo(() => hello())` suspends into the nearest `<Loading>` boundary —
+ * no extra machinery needed.
+ *
+ * On the server the cache lives per-request in `getRequestEvent().locals`
+ * (never module state — an SSR server shares module scope across concurrent
+ * requests). On the client it is module-level: an entry is fresh while it is
+ * actively observed (a tracking scope read it and hasn't been cleaned up) or
+ * within a short window after creation; stale or invalidated entries refetch
+ * on the next read.
+ *
+ * SSR -> hydration usually needs no wiring: the component memo that reads the
+ * query is serialized by Solid itself, so the client adopts the server's value
+ * without refetching. `collectQueries`/`seedQueries` exist for hosts that warm
+ * the cache outside the render tree and need an explicit channel — e.g.
+ * TanStack Router, where they wire into its `dehydrate`/`hydrate` options.
+ *
+ * Deviations from solid-router: server functions are declared GET through
+ * transport metadata (compiled references carry no `.GET` property), and
+ * routing intent/preload semantics plus Response/redirect handling are not
+ * ported (TODO).
  */
 import { createSignal, getObserver, onCleanup } from "solid-js";
 import { getRequestEvent, isServer } from "@solidjs/web";
-// Bare specifier on purpose: the '/client' and '/server' subpaths are
-// separate module instances under Vite's optimizer.
-import {
-  GET,
-  getServerFunctionMetadata,
-  isServerFunction,
-} from "@solidjs/web/server-functions";
+// Bare specifier on purpose: the compiled server-function references import
+// '@solidjs/web/server-functions', and bundlers give each specifier its own
+// module instance — the '/client' subpath would attach metadata in a copy the
+// transport never reads.
+import { GET, getServerFunctionMetadata, isServerFunction } from "@solidjs/web/server-functions";
 
 const PRELOAD_TIMEOUT = 5000;
 const CACHE_TIMEOUT = 180000;
@@ -44,7 +57,7 @@ function getCache() {
   if (!isServer) return cacheMap;
   const req = getRequestEvent();
   if (!req) throw new Error("Cannot find cache context");
-  return (req.locals.queryCache ||
+  return ((req.locals.queryCache as Map<string, CacheEntry>) ||
     (req.locals.queryCache = new Map())) as Map<string, CacheEntry>;
 }
 
@@ -74,7 +87,10 @@ function createEntry(ts: number, res: any): CacheEntry {
   const entry: CacheEntry = [ts, res, undefined, createSignal(ts) as any];
   entry[3].count = 0;
   res && typeof res.then === "function"
-    ? res.then((v: any) => entry[1] === res && (entry[2] = v), () => {})
+    ? res.then(
+        (v: any) => entry[1] === res && (entry[2] = v),
+        () => {}
+      )
     : (entry[2] = res);
   return entry;
 }
@@ -95,11 +111,7 @@ export function query<T extends (...args: any) => any>(fn: T, name: string): Cac
       onCleanup(() => cached![3].count--);
     }
 
-    if (
-      cached &&
-      cached[0] &&
-      (isServer || cached[3].count || now - cached[0] < PRELOAD_TIMEOUT)
-    ) {
+    if (cached && cached[0] && (isServer || cached[3].count || now - cached[0] < PRELOAD_TIMEOUT)) {
       if (tracking) {
         cached[3].count++;
         cached[3][0](); // track
@@ -112,7 +124,10 @@ export function query<T extends (...args: any) => any>(fn: T, name: string): Cac
       cached[0] = now;
       cached[1] = res;
       res && typeof res.then === "function"
-        ? res.then((v: any) => cached![1] === res && (cached![2] = v), () => {})
+        ? res.then(
+            (v: any) => cached![1] === res && (cached![2] = v),
+            () => {}
+          )
         : (cached[2] = res);
     } else {
       cache.set(key, (cached = createEntry(now, res)));
@@ -150,10 +165,12 @@ query.delete = (key: string) => getCache().delete(key);
 query.clear = () => getCache().clear();
 
 /**
- * Server-only: snapshot the per-request cache's promises (NOT awaited —
- * TanStack streams promise resolutions via seroval). Wire into the router:
- * `dehydrate: () => ({ queries: collectQueries() })`. Runs after loaders,
- * before render — only loader-warmed queries are captured.
+ * Server-only: snapshot the per-request cache's promises, un-awaited. For
+ * hosts that warm the cache outside the render tree and need an explicit
+ * SSR -> client channel — e.g. TanStack Router's
+ * `dehydrate: () => ({ queries: collectQueries() })`, whose serializer streams
+ * promise resolutions. Not needed when queries are only read inside components:
+ * Solid serializes the reading memo itself.
  */
 export function collectQueries(): Record<string, Promise<any>> {
   const queries: Record<string, Promise<any>> = {};
@@ -162,10 +179,7 @@ export function collectQueries(): Record<string, Promise<any>> {
   return queries;
 }
 
-/**
- * Client-only: install server-collected promises before hydration renders.
- * Wire into the router: `hydrate: (data) => { seedQueries(data?.queries) }`.
- */
+/** Client-only counterpart to `collectQueries` — install before hydration renders. */
 export function seedQueries(queries?: Record<string, unknown>) {
   if (isServer || !queries) return;
   for (const [key, res] of Object.entries(queries)) {

@@ -3,6 +3,9 @@ import { HeadContent, Link, Outlet, Scripts, createRootRoute } from '@tanstack/s
 import { HydrationScript, NoHydration, getRequestEvent, type JSX } from '@solidjs/web'
 
 import appCss from '../App.css?url'
+import { installQueryFlightConsumer } from '../flight.ts'
+
+installQueryFlightConsumer()
 
 export const Route = createRootRoute({
   component: Layout,
