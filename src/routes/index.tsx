@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/solid-router'
 import { createMemo, Loading } from 'solid-js'
-import { changeText, hello } from '../api.ts'
+import { changeText, hello } from '../api'
 
 export const Route = createFileRoute('/')({
   loader: () => {

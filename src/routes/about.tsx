@@ -1,15 +1,14 @@
+import { dynamic } from '@solidjs/web';
 import { createFileRoute } from '@tanstack/solid-router'
+import { getAboutPage } from '../api';
 
 export const Route = createFileRoute('/about')({
   component: About,
 })
 
 function About() {
+  const AboutUs = dynamic(() => getAboutPage());
   return (
-    <section class="page">
-      <p class="eyebrow">Route /about</p>
-      <h1>About</h1>
-      <p class="lede">This app renders the whole document on the server, streams async boundaries, then hydrates into a client-side router.</p>
-    </section>
+    <AboutUs button={(props: { id: number }) => <button onClick={() => console.log(props.id)}>Click me {props.id}</button>} />
   )
 }

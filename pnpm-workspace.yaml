@@ -5,7 +5,7 @@ allowBuilds:
 
 minimumReleaseAgeExclude:
   - "@tanstack/*"
-  - vite-plugin-solid@3.0.0-next.20
+  - vite-plugin-solid
   - solid-js
   - "@solidjs/*"
   - babel-preset-solid
@@ -13,3 +13,4 @@ minimumReleaseAgeExclude:
   # registry metadata for these lacks the "time" field the release-age gate needs
   - "seroval"
   - "seroval-plugins"
+  - "undici-types"

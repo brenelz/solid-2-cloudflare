@@ -21,7 +21,7 @@ export default defineConfig({
     }),
     solid({
       ssr: { external: true },
-      serverFunctions: { configure: './src/server-config.ts' },
+      serverFunctions: { configure: './src/server-config.ts', components: true },
     }),
   ],
 })
